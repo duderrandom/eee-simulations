@@ -64,7 +64,7 @@ export default function WelcomePage() {
   const radius = 280;
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-slate-950">
+    <div className="relative w-full h-full min-h-screen overflow-hidden bg-slate-950">
       {/* Background circuit pattern */}
       <div
         className="absolute inset-0 opacity-[0.035] pointer-events-none"
@@ -78,7 +78,7 @@ export default function WelcomePage() {
       <div className="absolute inset-0 bg-gradient-radial from-cyan-500/5 via-transparent to-transparent pointer-events-none" />
 
       {/* Main content */}
-      <div className="relative z-10 flex flex-col h-full p-8">
+      <div className="relative z-10 flex flex-col h-full min-h-screen p-8">
         {/* Header */}
         <header className="text-center mb-8 animate-fade-in">
           {/* Group badge */}
@@ -166,7 +166,7 @@ export default function WelcomePage() {
           </div>
 
           {/* Simulation cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 max-w-md">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 max-w-md z-20">
             {SIMULATION_LINKS.map((link, index) => {
               const Icon = link.icon;
 
@@ -177,10 +177,10 @@ export default function WelcomePage() {
                   className={cn(
                     "group relative",
                     "p-4 rounded-xl",
-                    "bg-slate-900/40 backdrop-blur-sm",
+                    "bg-slate-900/80 backdrop-blur-md",
                     "border border-slate-800/60",
                     "transition-all duration-300",
-                    "hover:bg-slate-900/60 hover:border-slate-700",
+                    "hover:bg-slate-800/80 hover:border-slate-600",
                     "hover:shadow-lg hover:shadow-black/30",
                     "hover:translate-x-1"
                   )}
@@ -191,7 +191,7 @@ export default function WelcomePage() {
                   <div className="flex items-center gap-4">
                     {/* Icon */}
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110"
                       style={{
                         backgroundColor: `${link.color}15`,
                         border: `1px solid ${link.color}30`,
@@ -232,7 +232,7 @@ export default function WelcomePage() {
         </div>
 
         {/* Footer */}
-        <footer className="text-center text-xs text-slate-600 mt-auto pt-4">
+        <footer className="text-center text-xs text-slate-600 mt-auto pt-4 pb-2 z-20">
           <span>Built with Next.js, React Three Fiber & Tailwind CSS</span>
         </footer>
       </div>
