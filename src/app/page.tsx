@@ -104,11 +104,29 @@ export default function WelcomePage() {
           </p>
         </header>
 
+        {/* Mobile team members — shown below lg */}
+        <div className="lg:hidden w-full max-w-md mx-auto mb-6">
+          <p className="text-xs font-semibold text-cyan-400 tracking-widest uppercase text-center mb-3">
+            Team Members
+          </p>
+          <div className="grid grid-cols-1 gap-2">
+            {TEAM_MEMBERS.map((member) => (
+              <div
+                key={member.reg}
+                className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-700/50"
+              >
+                <span className="text-sm font-medium text-slate-200">{member.name}</span>
+                <span className="text-xs font-mono text-cyan-500/80">{member.reg}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Main layout: Pentagon + Simulation cards */}
         <div className="flex-1 flex items-center justify-center gap-16">
-          {/* Pentagon layout - Team members */}
+          {/* Pentagon layout — visible on lg+ */}
           <div className="relative w-[600px] h-[600px] shrink-0 hidden lg:flex items-center justify-center">
-            {/* Center node - Project info */}
+            {/* Center node */}
             <div className="absolute flex flex-col items-center text-center z-20">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 flex items-center justify-center mb-4">
                 <Zap className="w-6 h-6 text-cyan-400" />
@@ -128,9 +146,7 @@ export default function WelcomePage() {
                 <div
                   key={member.reg}
                   className="absolute flex flex-col items-center group cursor-default"
-                  style={{
-                    transform: `translate(${x}px, ${y}px)`,
-                  }}
+                  style={{ transform: `translate(${x}px, ${y}px)` }}
                 >
                   <div
                     className={cn(
@@ -150,16 +166,6 @@ export default function WelcomePage() {
                       {member.reg}
                     </span>
                   </div>
-
-                  {/* Connector line to center */}
-                  <div
-                    className="absolute w-px h-8 bg-gradient-to-b from-slate-700/50 to-transparent"
-                    style={{
-                      bottom: "100%",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                    }}
-                  />
                 </div>
               );
             })}
@@ -197,10 +203,7 @@ export default function WelcomePage() {
                         border: `1px solid ${link.color}30`,
                       }}
                     >
-                      <Icon
-                        className="w-5 h-5"
-                        style={{ color: link.color }}
-                      />
+                      <Icon className="w-5 h-5" style={{ color: link.color }} />
                     </div>
 
                     {/* Content */}
