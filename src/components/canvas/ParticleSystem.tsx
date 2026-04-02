@@ -1,29 +1,34 @@
-import React, { useRef, useMemo } from 'react';
+"use client";
+
+import React, { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
-// ... previous imports ...
-
 interface ParticleSystemProps {
-  // Added 'ac_electron' to the list
   count?: number;
-  type: 'electron' | 'ion' | 'proton' | 'oxygen' | 'water' | 'gasoline' | 'kinetic' | 'ac_electron'; 
+  type: 'electron' | 'ion' | 'proton' | 'oxygen' | 'hydrogen' | 'water' | 'gasoline' | 'kinetic' | 'ac_electron';
   speed: number;
   bounds?: [number, number, number];
   flowDirection?: [number, number, number];
 }
 
 const PARTICLE_CONFIG = {
-  electron:    { color: '#eab308', size: 0.05, emissive: 0.8 }, // Yellow (DC)
-  ion:         { color: '#3b82f6', size: 0.15, emissive: 0.4 }, 
-  proton:      { color: '#ef4444', size: 0.10, emissive: 0.6 }, 
-  oxygen:      { color: '#cbd5e1', size: 0.15, emissive: 0.2 }, 
-  water:       { color: '#0ea5e9', size: 0.20, emissive: 0.4 }, 
-  gasoline:    { color: '#f97316', size: 0.12, emissive: 0.5 }, 
-  kinetic:     { color: '#22c55e', size: 0.15, emissive: 0.8 }, 
-  ac_electron: { color: '#a855f7', size: 0.06, emissive: 0.8 }, // Purple (AC)
+  electron:    { color: '#22d3ee', size: 0.06, emissive: 0.9 },
+  ac_electron: { color: '#a855f7', size: 0.06, emissive: 0.9 },
+  ion:         { color: '#3b82f6', size: 0.12, emissive: 0.5 },
+  proton:      { color: '#ef4444', size: 0.08, emissive: 0.7 },
+  oxygen:      { color: '#cbd5e1', size: 0.12, emissive: 0.3 },
+  hydrogen:    { color: '#ffffff', size: 0.06, emissive: 0.6 },
+  water:       { color: '#0ea5e9', size: 0.15, emissive: 0.5 },
+  gasoline:    { color: '#f97316', size: 0.10, emissive: 0.6 },
+  kinetic:     { color: '#22c55e', size: 0.10, emissive: 0.8 },
 };
 
+interface Particle {
+  position: THREE.Vector3;
+  jitter: THREE.Vector3; // Changed from 'velocity' to 'jitter' to avoid confusion
+  phase: number;
+}
 
 export const ParticleSystem: React.FC<ParticleSystemProps> = ({
   count = 100,
@@ -34,9 +39,12 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
 }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  const particlesRef = useRef<Particle[]>([]);
+  const timeRef = useRef(0);
 
-  const particles = useMemo(() => {
-    const temp = [];
+  // Initialize particles with positions and random jitter
+  useEffect(() => {
+    const temp: Particle[] = [];
     for (let i = 0; i < count; i++) {
       temp.push({
         position: new THREE.Vector3(
@@ -44,36 +52,62 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
           (Math.random() - 0.5) * bounds[1] * 2,
           (Math.random() - 0.5) * bounds[2] * 2
         ),
-        velocity: flowDirection
-          ? new THREE.Vector3(...flowDirection).add(
-              new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5)
-            )
-          : new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+        jitter: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.2,
+          (Math.random() - 0.5) * 0.2,
+          (Math.random() - 0.5) * 0.2
+        ),
+        phase: Math.random() * Math.PI * 2,
       });
     }
-    return temp;
-  }, [count, bounds, flowDirection]);
+    particlesRef.current = temp;
+  }, [count, bounds]);
 
   useFrame((state, delta) => {
-    if (!meshRef.current || speed === 0) return;
+    if (!meshRef.current || speed === 0 || particlesRef.current.length === 0) return;
+
+    timeRef.current += delta;
+    const glowPulse = 0.7 + 0.3 * Math.sin(timeRef.current * 3);
+    const particles = particlesRef.current;
+    
+    // Create the base flow vector from props
+    const baseFlow = flowDirection 
+      ? new THREE.Vector3(...flowDirection) 
+      : new THREE.Vector3(0, 0, 0);
 
     particles.forEach((particle, i) => {
-      particle.position.addScaledVector(particle.velocity, delta * speed);
+      // REQUISITE: Combine flowDirection (global) with jitter (local) per frame
+      const currentMove = new THREE.Vector3()
+        .copy(baseFlow)
+        .add(particle.jitter)
+        .normalize();
 
+      particle.position.addScaledVector(currentMove, delta * speed);
+
+      // BOUNDARY HANDLING (Wrapping)
       if (flowDirection) {
+        // Wrap X
         if (particle.position.x > bounds[0]) particle.position.x = -bounds[0];
-        if (particle.position.x < -bounds[0]) particle.position.x = bounds[0];
+        else if (particle.position.x < -bounds[0]) particle.position.x = bounds[0];
+        
+        // Wrap Y
         if (particle.position.y > bounds[1]) particle.position.y = -bounds[1];
-        if (particle.position.y < -bounds[1]) particle.position.y = bounds[1];
+        else if (particle.position.y < -bounds[1]) particle.position.y = bounds[1];
+        
+        // Wrap Z
         if (particle.position.z > bounds[2]) particle.position.z = -bounds[2];
-        if (particle.position.z < -bounds[2]) particle.position.z = bounds[2];
+        else if (particle.position.z < -bounds[2]) particle.position.z = bounds[2];
       } else {
-        if (Math.abs(particle.position.x) > bounds[0]) particle.velocity.x *= -1;
-        if (Math.abs(particle.position.y) > bounds[1]) particle.velocity.y *= -1;
-        if (Math.abs(particle.position.z) > bounds[2]) particle.velocity.z *= -1;
+        // Bounce logic for random/static types
+        if (Math.abs(particle.position.x) > bounds[0]) particle.jitter.x *= -1;
+        if (Math.abs(particle.position.y) > bounds[1]) particle.jitter.y *= -1;
+        if (Math.abs(particle.position.z) > bounds[2]) particle.jitter.z *= -1;
       }
 
+      // Update Instance Matrix
+      const scale = 0.9 + 0.2 * glowPulse * Math.min(speed / 3, 1);
       dummy.position.copy(particle.position);
+      dummy.scale.setScalar(scale);
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
     });
@@ -86,11 +120,14 @@ export const ParticleSystem: React.FC<ParticleSystemProps> = ({
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
       <sphereGeometry args={[config.size, 16, 16]} />
-      <meshStandardMaterial 
-        color={config.color} 
-        emissive={config.color} 
-        emissiveIntensity={config.emissive} 
-        roughness={0.2} 
+      <meshStandardMaterial
+        color={config.color}
+        emissive={config.color}
+        emissiveIntensity={config.emissive}
+        roughness={0.2}
+        metalness={0.3}
+        transparent
+        opacity={0.8}
       />
     </instancedMesh>
   );

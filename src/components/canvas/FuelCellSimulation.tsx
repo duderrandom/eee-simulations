@@ -1,6 +1,6 @@
 import React from 'react';
 import { ParticleSystem } from './ParticleSystem';
-import { RoundedBox } from '@react-three/drei';
+import { RoundedBox, Text, Billboard } from '@react-three/drei';
 
 interface FuelCellSimulationProps {
   isRunning: boolean;
@@ -14,25 +14,47 @@ export const FuelCellSimulation: React.FC<FuelCellSimulationProps> = ({ isRunnin
     <group>
       {/* 1. PEM (Proton Exchange Membrane) - Center glowing electrolyte */}
       <RoundedBox position={[0, 0, 0]} args={[0.8, 4, 2]} radius={0.05} smoothness={4}>
-        <meshPhysicalMaterial 
-          color="#8b5cf6" 
-          transparent 
-          opacity={0.3} 
-          roughness={0.1} 
-          transmission={0.5} 
-          thickness={0.5} 
-          emissive="#6d28d9" 
+        <meshPhysicalMaterial
+          color="#8b5cf6"
+          transparent
+          opacity={0.3}
+          roughness={0.1}
+          transmission={0.5}
+          thickness={0.5}
+          emissive="#6d28d9"
           emissiveIntensity={0.2}
         />
       </RoundedBox>
+
+      {/* PEM Label */}
+      <Billboard position={[0, 2.8, 0]}>
+        <Text fontSize={0.45} color="#a78bfa" anchorX="center" anchorY="middle">
+          PEM Membrane
+        </Text>
+      </Billboard>
 
       {/* 2. Electrodes (Left Anode, Right Cathode) - Metallic */}
       <RoundedBox position={[-0.6, 0, 0]} args={[0.4, 4, 2]} radius={0.05} smoothness={4}>
         <meshStandardMaterial color="#475569" metalness={0.8} roughness={0.3} />
       </RoundedBox>
+
+      {/* Anode Label */}
+      <Billboard position={[-0.6, 2.8, 0]}>
+        <Text fontSize={0.4} color="#94a3b8" anchorX="center" anchorY="middle">
+          Anode
+        </Text>
+      </Billboard>
+
       <RoundedBox position={[0.6, 0, 0]} args={[0.4, 4, 2]} radius={0.05} smoothness={4}>
         <meshStandardMaterial color="#475569" metalness={0.8} roughness={0.3} />
       </RoundedBox>
+
+      {/* Cathode Label */}
+      <Billboard position={[0.6, 2.8, 0]}>
+        <Text fontSize={0.4} color="#94a3b8" anchorX="center" anchorY="middle">
+          Cathode
+        </Text>
+      </Billboard>
 
       {/* 3. External Circuit Assembly */}
       <group>
@@ -40,12 +62,12 @@ export const FuelCellSimulation: React.FC<FuelCellSimulationProps> = ({ isRunnin
         <RoundedBox position={[0, 2.8, 0]} args={[2.4, 0.15, 0.15]} radius={0.07} smoothness={4}>
           <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
         </RoundedBox>
-        
+
         {/* Left Vertical Connector (Anode to Wire) */}
         <RoundedBox position={[-0.6, 2.4, 0]} args={[0.15, 0.8, 0.15]} radius={0.07} smoothness={4}>
           <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />
         </RoundedBox>
-        
+
         {/* Right Vertical Connector (Cathode to Wire) */}
         <RoundedBox position={[0.6, 2.4, 0]} args={[0.15, 0.8, 0.15]} radius={0.07} smoothness={4}>
           <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.2} />

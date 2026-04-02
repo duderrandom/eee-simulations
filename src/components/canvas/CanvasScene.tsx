@@ -1,54 +1,184 @@
 "use client";
 
-import React, { useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, Environment } from '@react-three/drei';
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { cn } from '@/lib/utils';
+import { RotateCcw, Move3D } from 'lucide-react';
 
 interface CanvasSceneProps {
   children?: React.ReactNode;
 }
 
-export const CanvasScene: React.FC<CanvasSceneProps> = ({ children }) => {
-  const controlsRef = useRef<OrbitControlsImpl>(null);
+function CameraController({ onResetReady }: { onResetReady: (fn: () => void) => void }) {
+  const { camera } = useThree();
+  const isResettingRef = useRef(false);
 
-  // Function to snap the camera back to the exact starting position
-  const resetCamera = () => {
-    if (controlsRef.current) {
-      controlsRef.current.reset();
-    }
-  };
+  const resetCamera = useCallback(() => {
+    if (isResettingRef.current) return;
+
+    isResettingRef.current = true;
+    const targetPosition = { x: 8, y: 6, z: 8 };
+
+    // Animate to position over 600ms
+    const startPosition = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+    const duration = 600;
+    const startTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease out cubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      camera.position.set(
+        startPosition.x + (targetPosition.x - startPosition.x) * ease,
+        startPosition.y + (targetPosition.y - startPosition.y) * ease,
+        startPosition.z + (targetPosition.z - startPosition.z) * ease
+      );
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        isResettingRef.current = false;
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [camera]);
+
+  // Register the reset function once
+  useEffect(() => {
+    onResetReady(resetCamera);
+  }, [onResetReady, resetCamera]);
 
   return (
-    <div className="absolute inset-0 bg-black rounded-xl overflow-hidden border border-neutral-800 shadow-2xl group">
-      
-      {/* HTML Overlay: Hidden by default, appears on hover over the canvas */}
-      <button 
-        onClick={resetCamera}
-        className="absolute top-4 right-4 z-10 bg-neutral-900/80 hover:bg-neutral-800 text-neutral-400 hover:text-white px-3 py-1.5 rounded-md text-xs font-mono border border-neutral-700 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+    <OrbitControls
+      makeDefault
+      minDistance={4}
+      maxDistance={20}
+      maxPolarAngle={Math.PI / 2 + 0.15}
+      enablePan={false}
+      enableDamping
+      dampingFactor={0.05}
+      rotateSpeed={0.8}
+    />
+  );
+}
+
+export const CanvasScene: React.FC<CanvasSceneProps> = ({ children }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const resetFnRef = useRef<(() => void) | null>(null);
+
+  const handleResetView = useCallback(() => {
+    if (resetFnRef.current) {
+      resetFnRef.current();
+    }
+  }, []);
+
+  const handleResetReady = useCallback((fn: () => void) => {
+    resetFnRef.current = fn;
+  }, []);
+
+  return (
+    <div
+      className={cn(
+        "absolute inset-0",
+        "rounded-2xl overflow-hidden",
+        "bg-gradient-to-b from-slate-900/50 to-slate-950/50",
+        "border border-slate-700/30",
+        "shadow-2xl shadow-black/40",
+        "group transition-all duration-300"
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Top-left: Scene info badge */}
+      <div
+        className={cn(
+          "absolute top-4 left-4 z-10",
+          "flex items-center gap-2",
+          "bg-slate-900/70 backdrop-blur-sm",
+          "border border-slate-700/50 rounded-xl px-3 py-2",
+          "text-xs text-slate-400 font-mono",
+          "transition-all duration-300",
+          isHovered ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        )}
       >
-        [ RESET VIEW ]
+        <Move3D className="w-3 h-3" />
+        <span>3D Scene</span>
+      </div>
+
+      {/* Top-right: Reset view button */}
+      <button
+        onClick={handleResetView}
+        className={cn(
+          "absolute top-4 right-4 z-10",
+          "flex items-center gap-2",
+          "bg-slate-900/70 backdrop-blur-sm",
+          "border border-slate-700/50 rounded-xl px-3 py-2",
+          "text-xs text-slate-400 font-mono",
+          "transition-all duration-300",
+          "hover:bg-slate-800/80 hover:text-cyan-400 hover:border-cyan-500/30",
+          "hover:shadow-[0_0_12px_rgba(34,211,238,0.15)]",
+          isHovered ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        )}
+      >
+        <RotateCcw className="w-3 h-3" />
+        <span>Reset View</span>
       </button>
 
-      <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
-        
-        {/* Adds realistic but lightweight lighting reflections for our metal materials */}
+      {/* Bottom-left: Instructions overlay */}
+      <div
+        className={cn(
+          "absolute bottom-4 left-4 z-10",
+          "flex items-center gap-3",
+          "bg-slate-900/60 backdrop-blur-sm",
+          "border border-slate-700/30 rounded-xl px-4 py-2",
+          "transition-all duration-400",
+          isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+        )}
+      >
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center">
+            <span className="text-[10px] text-slate-400 font-bold">L</span>
+          </div>
+          <span className="text-[10px] text-slate-500">Drag to rotate</span>
+        </div>
+        <div className="w-px h-3 bg-slate-700" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center">
+            <span className="text-[10px] text-slate-400 font-bold">R</span>
+          </div>
+          <span className="text-[10px] text-slate-500">Scroll to zoom</span>
+        </div>
+      </div>
+
+      <Canvas
+        camera={{ position: [8, 6, 8], fov: 45 }}
+        gl={{ antialias: true, alpha: true }}
+      >
+        <CameraController onResetReady={handleResetReady} />
+
+        {/* Lighting */}
+        <ambientLight intensity={0.4} />
+        <directionalLight position={[10, 10, 5]} intensity={0.8} castShadow />
+        <pointLight position={[-5, 5, -5]} intensity={0.3} color="#22d3ee" />
+
+        {/* Environment */}
         <Environment preset="city" />
 
-        <Grid infiniteGrid fadeDistance={20} sectionColor="#444" cellColor="#222" />
-        
-        {/* Constrained Controls */}
-        <OrbitControls 
-          ref={controlsRef}
-          makeDefault 
-          minDistance={3}         // Prevents zooming inside the models
-          maxDistance={15}        // Prevents zooming out into the void
-          maxPolarAngle={Math.PI / 2 + 0.1} // Prevents looking at the bottom of the grid
-          enablePan={false}       // Prevents dragging the models off-screen
+        {/* Grid */}
+        <Grid
+          infiniteGrid
+          fadeDistance={25}
+          sectionColor="#1e293b"
+          cellColor="#0f172a"
+          sectionSize={5}
+          cellSize={1}
         />
-        
+
         {children}
       </Canvas>
     </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ParticleSystem } from './ParticleSystem';
-import { Text, RoundedBox } from '@react-three/drei';
+import { Text, RoundedBox, Billboard } from '@react-three/drei';
 
 interface BatterySimulationProps {
   isRunning: boolean;
@@ -25,6 +25,13 @@ export const BatterySimulation: React.FC<BatterySimulationProps> = ({ isRunning,
         -
       </Text>
 
+      {/* Anode Label (Billboard) */}
+      <Billboard position={[-3, 2.8, 0]}>
+        <Text fontSize={0.5} color="#94a3b8" anchorX="center" anchorY="middle">
+          Anode
+        </Text>
+      </Billboard>
+
       {/* 2. Cathode (Right Side) - Warm Copper Look */}
       <RoundedBox position={[3, 0, 0]} args={[1, 4, 2]} radius={0.1} smoothness={4}>
         <meshStandardMaterial color="#9b2c2c" metalness={0.5} roughness={0.4} transparent opacity={0.95} />
@@ -36,10 +43,24 @@ export const BatterySimulation: React.FC<BatterySimulationProps> = ({ isRunning,
         +
       </Text>
 
+      {/* Cathode Label (Billboard) */}
+      <Billboard position={[3, 2.8, 0]}>
+        <Text fontSize={0.5} color="#94a3b8" anchorX="center" anchorY="middle">
+          Cathode
+        </Text>
+      </Billboard>
+
       {/* 3. Electrolyte / Separator - Clean Acrylic Look */}
       <RoundedBox position={[0, 0, 0]} args={[5, 4, 2]} radius={0.1} smoothness={4}>
         <meshStandardMaterial color="#e61291" transparent opacity={0.12} depthWrite={false} roughness={0.1} metalness={0.1} />
       </RoundedBox>
+
+      {/* Electrolyte Label (Billboard) */}
+      <Billboard position={[0, 2.8, 0]}>
+        <Text fontSize={0.45} color="#f472b6" anchorX="center" anchorY="middle">
+          Electrolyte
+        </Text>
+      </Billboard>
 
       {/* 4. External Circuit Wire - Metallic Wire */}
       <RoundedBox position={[0, 3, 0]} args={[6, 0.1, 0.1]} radius={0.05} smoothness={4}>
